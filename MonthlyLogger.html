@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0f172a">
+    <title>Monthly Logger</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        html, body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            padding: 10px 14px 8px;
+            flex-shrink: 0;
+            border-bottom: 1px solid #334155;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .header-left h1 { font-size: 18px; font-weight: 700; color: #f8fafc; }
+        .header-left .subtitle { font-size: 11px; color: #94a3b8; }
+        .header-right { display: flex; gap: 6px; }
+        .icon-btn {
+            background: #334155;
+            border: none;
+            color: #e2e8f0;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .icon-btn:active { background: #475569; }
+        
+        .month-nav {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            padding: 6px 14px;
+            background: #1e293b;
+            flex-shrink: 0;
+            border-bottom: 1px solid #334155;
+        }
+        .month-nav button {
+            background: #334155;
+            border: none;
+            color: #e2e8f0;
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .month-nav button:active { background: #475569; }
+        .month-nav .current-month {
+            font-size: 14px;
+            font-weight: 600;
+            color: #38bdf8;
+            min-width: 140px;
+            text-align: center;
+        }
+        
+        .main-scroll {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch;
+            padding: 10px 12px;
+        }
+        .main-scroll::-webkit-scrollbar { display: none; }
+        
+        .add-section {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #334155;
+        }
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        .section-header h3 { font-size: 12px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; }
+        .edit-presets-btn {
+            background: transparent;
+            border: 1px solid #475569;
+            color: #94a3b8;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 10px;
+            cursor: pointer;
+        }
+        .edit-presets-btn:active { background: #334155; }
+        
+        .categories-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px;
+            margin-bottom: 8px;
+        }
+        .category-chip {
+            background: #0f172a;
+            border: 1.5px solid #334155;
+            border-radius: 10px;
+            padding: 6px 2px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.15s;
+            min-height: 56px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .category-chip.active {
+            border-color: #38bdf8;
+            background: rgba(56, 189, 248, 0.12);
+        }
+        .category-chip .icon { font-size: 16px; display: block; margin-bottom: 1px; }
+        .category-chip .name { font-size: 9px; color: #cbd5e1; line-height: 1.1; }
+        .category-chip .count { font-size: 9px; color: #38bdf8; margin-top: 1px; }
+        
+        .input-row {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 6px;
+        }
+        .input-row input {
+            flex: 1;
+            background: #0f172a;
+            border: 1px solid #334155;
+            color: #e2e8f0;
+            padding: 8px 10px;
+            border-radius: 8px;
+            font-size: 13px;
+            outline: none;
+            height: 36px;
+        }
+        .input-row input:focus { border-color: #38bdf8; }
+        .input-row input::placeholder { color: #64748b; }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%);
+            border: none;
+            color: #0f172a;
+            padding: 9px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            height: 36px;
+        }
+        .btn-primary:active { opacity: 0.8; }
+        
+        .events-list {
+            background: #1e293b;
+            border-radius: 12px;
+            border: 1px solid #334155;
+            overflow: hidden;
+        }
+        .events-list-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 10px;
+            border-bottom: 1px solid #334155;
+        }
+        .events-list-header h3 { font-size: 12px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; }
+        .export-btn {
+            background: transparent;
+            border: 1px solid #475569;
+            color: #94a3b8;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 10px;
+            cursor: pointer;
+        }
+        .export-btn:active { background: #334155; }
+        
+        .events-scroll {
+            max-height: calc(100vh - 420px);
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .events-scroll::-webkit-scrollbar { display: none; }
+        
+        .event-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 10px;
+            border-bottom: 1px solid #334155;
+            gap: 8px;
+        }
+        .event-item:last-child { border-bottom: none; }
+        .event-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+        .event-details { flex: 1; min-width: 0; }
+        .event-name { font-size: 13px; font-weight: 500; color: #f1f5f9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .event-date { font-size: 10px; color: #94a3b8; margin-top: 1px; }
+        .event-cost { font-size: 12px; font-weight: 600; color: #4ade80; flex-shrink: 0; }
+        .delete-btn {
+            background: rgba(239, 68, 68, 0.12);
+            border: none;
+            color: #ef4444;
+            width: 26px;
+            height: 26px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .delete-btn:active { background: rgba(239, 68, 68, 0.25); }
+        
+        .empty-state {
+            text-align: center;
+            padding: 24px 16px;
+            color: #64748b;
+        }
+        .empty-state .emoji { font-size: 32px; margin-bottom: 6px; }
+        .empty-state p { font-size: 12px; line-height: 1.4; }
+        
+        .summary-bar {
+            background: #1e293b;
+            border-top: 1px solid #334155;
+            padding: 8px 16px;
+            display: flex;
+            justify-content: space-around;
+            flex-shrink: 0;
+        }
+        .summary-item { text-align: center; }
+        .summary-item .value { font-size: 16px; font-weight: 700; color: #38bdf8; }
+        .summary-item .label { font-size: 9px; color: #94a3b8; margin-top: 1px; }
+        
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.75);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+            padding: 16px;
+        }
+        .modal-overlay.show { display: flex; }
+        .modal {
+            background: #1e293b;
+            border-radius: 14px;
+            padding: 16px;
+            width: 100%;
+            max-width: 360px;
+            border: 1px solid #334155;
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .modal h3 { margin-bottom: 12px; color: #f8fafc; font-size: 15px; }
+        .modal p { color: #94a3b8; font-size: 13px; margin-bottom: 12px; }
+        .modal-scroll { overflow-y: auto; flex: 1; -webkit-overflow-scrolling: touch; }
+        .modal-scroll::-webkit-scrollbar { display: none; }
+        
+        .preset-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 0;
+            border-bottom: 1px solid #334155;
+        }
+        .preset-item:last-child { border-bottom: none; }
+        .preset-emoji {
+            width: 32px;
+            height: 32px;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 16px;
+            line-height: 30px;
+            flex-shrink: 0;
+        }
+        .preset-name {
+            flex: 1;
+            background: #0f172a;
+            border: 1px solid #334155;
+            color: #e2e8f0;
+            padding: 7px 10px;
+            border-radius: 8px;
+            font-size: 13px;
+            outline: none;
+            height: 32px;
+        }
+        .preset-name:focus { border-color: #38bdf8; }
+        .preset-remove {
+            background: rgba(239, 68, 68, 0.15);
+            border: none;
+            color: #ef4444;
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .preset-remove:active { background: rgba(239, 68, 68, 0.3); }
+        
+        .add-preset-row {
+            display: flex;
+            gap: 6px;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #334155;
+        }
+        .add-preset-row input {
+            flex: 1;
+            background: #0f172a;
+            border: 1px solid #334155;
+            color: #e2e8f0;
+            padding: 7px 10px;
+            border-radius: 8px;
+            font-size: 13px;
+            outline: none;
+            height: 32px;
+        }
+        .add-preset-row input:focus { border-color: #38bdf8; }
+        .btn-small {
+            background: #334155;
+            border: none;
+            color: #e2e8f0;
+            padding: 7px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            cursor: pointer;
+            height: 32px;
+            white-space: nowrap;
+        }
+        .btn-small:active { background: #475569; }
+        .btn-small.primary { background: linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%); color: #0f172a; font-weight: 600; }
+        
+        .modal-buttons { display: flex; gap: 8px; margin-top: 12px; }
+        .modal-buttons button { flex: 1; padding: 10px; border-radius: 8px; border: none; font-size: 13px; cursor: pointer; font-weight: 600; }
+        .btn-cancel { background: #334155; color: #e2e8f0; }
+        .btn-confirm { background: #ef4444; color: white; }
+        .btn-save { background: linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%); color: #0f172a; }
+        
+        .toast {
+            position: fixed;
+            bottom: 70px;
+            left: 50%;
+            transform: translateX(-50%) translateY(80px);
+            background: #10b981;
+            color: white;
+            padding: 8px 18px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 500;
+            opacity: 0;
+            transition: all 0.3s;
+            z-index: 300;
+            white-space: nowrap;
+        }
+        .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-left">
+            <h1>📅 Monthly Logger</h1>
+            <div class="subtitle">Track events & expenses</div>
+        </div>
+        <div class="header-right">
+            <button class="icon-btn" onclick="openPresetsModal()" title="Edit Presets">⚙️</button>
+        </div>
+    </div>
+    
+    <div class="month-nav">
+        <button onclick="changeMonth(-1)">◀</button>
+        <span class="current-month" id="currentMonth"></span>
+        <button onclick="changeMonth(1)">▶</button>
+    </div>
+    
+    <div class="main-scroll">
+        <div class="add-section">
+            <div class="section-header">
+                <h3>➕ Log New Event</h3>
+                <button class="edit-presets-btn" onclick="openPresetsModal()">Edit Presets</button>
+            </div>
+            <div class="categories-grid" id="categoryGrid"></div>
+            <div class="input-row">
+                <input type="text" id="customCategory" placeholder="Or type custom..." onkeypress="if(event.key==='Enter')addEvent()">
+            </div>
+            <div class="input-row">
+                <input type="number" id="eventCost" placeholder="Cost (₹)" step="0.01">
+                <input type="date" id="eventDate">
+            </div>
+            <button class="btn-primary" onclick="addEvent()">Log Event</button>
+        </div>
+        
+        <div class="events-list">
+            <div class="events-list-header">
+                <h3>📋 This Month</h3>
+                <button class="export-btn" onclick="exportData()">Export</button>
+            </div>
+            <div class="events-scroll" id="eventsList"></div>
+        </div>
+    </div>
+    
+    <div class="summary-bar">
+        <div class="summary-item">
+            <div class="value" id="totalEvents">0</div>
+            <div class="label">Events</div>
+        </div>
+        <div class="summary-item">
+            <div class="value" id="totalCost">₹0</div>
+            <div class="label">Total</div>
+        </div>
+        <div class="summary-item">
+            <div class="value" id="topCategory">-</div>
+            <div class="label">Top</div>
+        </div>
+    </div>
+    
+    <div class="modal-overlay" id="deleteModal">
+        <div class="modal">
+            <h3>🗑️ Delete Event?</h3>
+            <p>This action cannot be undone.</p>
+            <div class="modal-buttons">
+                <button class="btn-cancel" onclick="closeModal('deleteModal')">Cancel</button>
+                <button class="btn-confirm" onclick="confirmDelete()">Delete</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal-overlay" id="presetsModal">
+        <div class="modal">
+            <h3>⚙️ Edit Presets</h3>
+            <div class="modal-scroll" id="presetsList"></div>
+            <div class="add-preset-row">
+                <input type="text" id="newPresetEmoji" placeholder="Emoji" maxlength="2" style="flex:0.4">
+                <input type="text" id="newPresetName" placeholder="Category name" onkeypress="if(event.key==='Enter')addPreset()">
+                <button class="btn-small primary" onclick="addPreset()">Add</button>
+            </div>
+            <div class="modal-buttons">
+                <button class="btn-cancel" onclick="closeModal('presetsModal')">Cancel</button>
+                <button class="btn-save" onclick="savePresets()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const defaultCategories = [
+            { name: 'Milk', icon: '🥛' },
+            { name: 'Car', icon: '🚗' },
+            { name: 'Groceries', icon: '🛒' },
+            { name: 'Fuel', icon: '⛽' },
+            { name: 'Electric', icon: '⚡' },
+            { name: 'Water', icon: '💧' },
+            { name: 'Net', icon: '🌐' },
+            { name: 'Medical', icon: '💊' }
+        ];
+        
+        let currentDate = new Date();
+        let selectedCategory = null;
+        let deleteTargetId = null;
+        let events = [];
+        let categories = [];
+        let tempPresets = [];
+        
+        function loadData() {
+            const savedEvents = localStorage.getItem('monthlyLoggerData');
+            if (savedEvents) events = JSON.parse(savedEvents);
+            
+            const savedCats = localStorage.getItem('monthlyLoggerCategories');
+            categories = savedCats ? JSON.parse(savedCats) : JSON.parse(JSON.stringify(defaultCategories));
+        }
+        
+        function saveData() {
+            localStorage.setItem('monthlyLoggerData', JSON.stringify(events));
+        }
+        
+        function saveCategories() {
+            localStorage.setItem('monthlyLoggerCategories', JSON.stringify(categories));
+        }
+        
+        function init() {
+            loadData();
+            renderMonth();
+            renderCategories();
+            document.getElementById('eventDate').valueAsDate = new Date();
+        }
+        
+        function renderMonth() {
+            const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+            document.getElementById('currentMonth').textContent = `${months[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
+            renderEvents();
+        }
+        
+        function changeMonth(delta) {
+            currentDate.setMonth(currentDate.getMonth() + delta);
+            renderMonth();
+        }
+        
+        function renderCategories() {
+            const grid = document.getElementById('categoryGrid');
+            const monthEvents = getMonthEvents();
+            
+            grid.innerHTML = categories.map(cat => {
+                const count = monthEvents.filter(e => e.category === cat.name).length;
+                const isActive = selectedCategory === cat.name;
+                return `
+                    <div class="category-chip ${isActive ? 'active' : ''}" onclick="selectCategory('${cat.name}')">
+                        <span class="icon">${cat.icon}</span>
+                        <span class="name">${cat.name}</span>
+                        ${count > 0 ? `<span class="count">${count}×</span>` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        function selectCategory(name) {
+            selectedCategory = selectedCategory === name ? null : name;
+            document.getElementById('customCategory').value = selectedCategory || '';
+            renderCategories();
+        }
+        
+        function getMonthEvents() {
+            return events.filter(e => {
+                const d = new Date(e.date);
+                return d.getMonth() === currentDate.getMonth() && d.getFullYear() === currentDate.getFullYear();
+            }).sort((a, b) => new Date(b.date) - new Date(a.date));
+        }
+        
+        function renderEvents() {
+            const list = document.getElementById('eventsList');
+            const monthEvents = getMonthEvents();
+            
+            if (monthEvents.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <div class="emoji">📝</div>
+                        <p>No events yet.<br>Tap a preset above!</p>
+                    </div>
+                `;
+            } else {
+                list.innerHTML = monthEvents.map(event => {
+                    const cat = categories.find(c => c.name === event.category) || { icon: '📌' };
+                    const dateObj = new Date(event.date);
+                    const dateStr = dateObj.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+                    return `
+                        <div class="event-item">
+                            <div class="event-icon" style="background: ${getColorForCategory(event.category)}18; color: ${getColorForCategory(event.category)};">
+                                ${cat.icon}
+                            </div>
+                            <div class="event-details">
+                                <div class="event-name">${event.category}</div>
+                                <div class="event-date">${dateStr}</div>
+                            </div>
+                            ${event.cost ? `<div class="event-cost">₹${parseFloat(event.cost).toFixed(0)}</div>` : ''}
+                            <button class="delete-btn" onclick="askDelete('${event.id}')">🗑</button>
+                        </div>
+                    `;
+                }).join('');
+            }
+            
+            updateSummary(monthEvents);
+            renderCategories();
+        }
+        
+        function getColorForCategory(cat) {
+            const colors = {
+                'Milk': '#fbbf24', 'Car': '#38bdf8', 'Groceries': '#4ade80',
+                'Fuel': '#f87171', 'Electric': '#fbbf24', 'Water': '#60a5fa',
+                'Net': '#a78bfa', 'Medical': '#f472b6', 'Dining': '#fb923c',
+                'Shopping': '#c084fc', 'Transport': '#2dd4bf', 'Other': '#94a3b8'
+            };
+            return colors[cat] || '#94a3b8';
+        }
+        
+        function updateSummary(monthEvents) {
+            document.getElementById('totalEvents').textContent = monthEvents.length;
+            const total = monthEvents.reduce((sum, e) => sum + (parseFloat(e.cost) || 0), 0);
+            document.getElementById('totalCost').textContent = '₹' + total.toFixed(0);
+            
+            const catCounts = {};
+            monthEvents.forEach(e => { catCounts[e.category] = (catCounts[e.category] || 0) + 1; });
+            const topCat = Object.entries(catCounts).sort((a, b) => b[1] - a[1])[0];
+            document.getElementById('topCategory').textContent = topCat ? topCat[0].substring(0,6) : '-';
+        }
+        
+        function addEvent() {
+            const customCat = document.getElementById('customCategory').value.trim();
+            const cost = document.getElementById('eventCost').value;
+            const date = document.getElementById('eventDate').value;
+            
+            const category = customCat || selectedCategory;
+            
+            if (!category) { showToast('⚠️ Select or type a category'); return; }
+            if (!date) { showToast('⚠️ Select a date'); return; }
+            
+            events.push({
+                id: Date.now().toString(),
+                category: category,
+                cost: cost || 0,
+                date: date,
+                createdAt: new Date().toISOString()
+            });
+            
+            saveData();
+            document.getElementById('customCategory').value = '';
+            document.getElementById('eventCost').value = '';
+            selectedCategory = null;
+            renderEvents();
+            showToast('✅ Logged!');
+        }
+        
+        function askDelete(id) {
+            deleteTargetId = id;
+            document.getElementById('deleteModal').classList.add('show');
+        }
+        
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('show');
+            if (id === 'deleteModal') deleteTargetId = null;
+        }
+        
+        function confirmDelete() {
+            if (deleteTargetId) {
+                events = events.filter(e => e.id !== deleteTargetId);
+                saveData();
+                renderEvents();
+                showToast('🗑️ Deleted');
+            }
+            closeModal('deleteModal');
+        }
+        
+        function openPresetsModal() {
+            tempPresets = JSON.parse(JSON.stringify(categories));
+            renderPresetsList();
+            document.getElementById('presetsModal').classList.add('show');
+            document.getElementById('newPresetEmoji').value = '';
+            document.getElementById('newPresetName').value = '';
+        }
+        
+        function renderPresetsList() {
+            const list = document.getElementById('presetsList');
+            list.innerHTML = tempPresets.map((cat, idx) => `
+                <div class="preset-item">
+                    <input type="text" class="preset-emoji" value="${cat.icon}" maxlength="2" onchange="updatePresetEmoji(${idx}, this.value)">
+                    <input type="text" class="preset-name" value="${cat.name}" onchange="updatePresetName(${idx}, this.value)">
+                    <button class="preset-remove" onclick="removePreset(${idx})">✕</button>
+                </div>
+            `).join('');
+        }
+        
+        function updatePresetEmoji(idx, val) {
+            tempPresets[idx].icon = val.trim() || '📌';
+        }
+        
+        function updatePresetName(idx, val) {
+            tempPresets[idx].name = val.trim() || 'Untitled';
+        }
+        
+        function removePreset(idx) {
+            if (tempPresets.length <= 1) {
+                showToast('⚠️ Need at least 1 preset');
+                return;
+            }
+            tempPresets.splice(idx, 1);
+            renderPresetsList();
+        }
+        
+        function addPreset() {
+            const emoji = document.getElementById('newPresetEmoji').value.trim() || '📌';
+            const name = document.getElementById('newPresetName').value.trim();
+            if (!name) { showToast('⚠️ Enter a name'); return; }
+            tempPresets.push({ name, icon: emoji });
+            document.getElementById('newPresetEmoji').value = '';
+            document.getElementById('newPresetName').value = '';
+            renderPresetsList();
+        }
+        
+        function savePresets() {
+            categories = JSON.parse(JSON.stringify(tempPresets));
+            saveCategories();
+            selectedCategory = null;
+            document.getElementById('customCategory').value = '';
+            renderCategories();
+            renderEvents();
+            closeModal('presetsModal');
+            showToast('✅ Presets saved!');
+        }
+        
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2000);
+        }
+        
+        function exportData() {
+            const dataStr = JSON.stringify(events, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `logger-backup-${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('📤 Exported!');
+        }
+        
+        document.getElementById('deleteModal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('deleteModal')) closeModal('deleteModal');
+        });
+        document.getElementById('presetsModal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('presetsModal')) closeModal('presetsModal');
+        });
+        
+        init();
+    </script>
+</body>
+</html>
